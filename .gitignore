@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Data soubory
+*.csv
+*.json
+
+# Virtuální prostředí
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+
+# Konfigurační soubory
+config.py
+
+# OS
+.DS_Store
+Thumbs.db 
