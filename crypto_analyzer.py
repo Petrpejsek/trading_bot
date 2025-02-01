@@ -91,42 +91,47 @@ def add_indicators(df):
         # Vytvoříme kopii DataFrame
         df = df.copy()
         
-        # Převedeme sloupce na float
+        # Převedeme sloupce na float a vyčistíme NaN hodnoty
         numeric_columns = ['open', 'high', 'low', 'close', 'volume']
         for col in numeric_columns:
-            df[col] = df[col].astype(float)
+            df[col] = pd.to_numeric(df[col], errors='coerce')
+            df[col] = df[col].ffill().bfill()  # Vyplníme chybějící hodnoty
         
-        # Zkontrolujeme NaN hodnoty v close cenách
-        if df['close'].isnull().any():
-            print("Varování: Nalezeny NaN hodnoty v close cenách")
-            # Vyplníme NaN hodnoty metodou forward fill a pak backward fill
-            df['close'] = df['close'].ffill().bfill()
+        # EMA indikátory
+        df['EMA9'] = df['close'].ewm(span=9, adjust=False).mean()
+        df['EMA21'] = df['close'].ewm(span=21, adjust=False).mean()
+        df['EMA50'] = df['close'].ewm(span=50, adjust=False).mean()
         
-        # Přidáme EMA indikátory
-        df['EMA9'] = ta.trend.ema_indicator(close=df['close'], window=9)
-        df['EMA21'] = ta.trend.ema_indicator(close=df['close'], window=21)
-        df['EMA50'] = ta.trend.ema_indicator(close=df['close'], window=50)
+        # RSI
+        delta = df['close'].diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+        rs = gain / loss
+        df['RSI'] = 100 - (100 / (1 + rs))
+        df['RSI'] = df['RSI'].clip(0, 100)  # Omezíme hodnoty na 0-100
         
-        # Přidáme RSI
-        df['RSI'] = ta.momentum.rsi(close=df['close'], window=14)
+        # Bollinger Bands (20 period SMA s 2 směrodatnými odchylkami)
+        df['BB_middle'] = df['close'].rolling(window=20).mean()
+        bb_std = df['close'].rolling(window=20).std()
+        df['BB_upper'] = df['BB_middle'] + (bb_std * 2)
+        df['BB_lower'] = df['BB_middle'] - (bb_std * 2)
         
-        # Přidáme Bollinger Bands
-        bb_indicator = ta.volatility.BollingerBands(close=df['close'], window=20, window_dev=2)
-        df['BB_horni'] = bb_indicator.bollinger_hband()
-        df['BB_dolni'] = bb_indicator.bollinger_lband()
+        # MACD (12,26,9)
+        exp1 = df['close'].ewm(span=12, adjust=False).mean()
+        exp2 = df['close'].ewm(span=26, adjust=False).mean()
+        df['MACD'] = exp1 - exp2
+        df['MACD_signal'] = df['MACD'].ewm(span=9, adjust=False).mean()
+        df['MACD_hist'] = df['MACD'] - df['MACD_signal']
         
-        # Přidáme změnu za posledních 5 svíček v procentech
-        df['zmena_5_svicek'] = df['close'].pct_change(periods=5) * 100
-        
-        # Přidáme volatilitu (10denní směrodatná odchylka zavíracích cen)
+        # Volatilita (10denní směrodatná odchylka zavíracích cen)
         df['volatilita_10'] = df['close'].rolling(window=10).std()
         
-        # Přidáme sloupec je_stagnace
-        df['je_stagnace'] = False
+        # Změna za posledních 5 svíček v procentech
+        df['zmena_5_svicek'] = df['close'].pct_change(periods=5) * 100
         
-        # Vyplníme NaN hodnoty v indikátorech metodou forward fill a pak backward fill
-        indicator_columns = ['EMA9', 'EMA21', 'EMA50', 'RSI', 'BB_horni', 'BB_dolni', 
-                           'zmena_5_svicek', 'volatilita_10']
+        # Vyplníme NaN hodnoty v indikátorech
+        indicator_columns = ['EMA9', 'EMA21', 'EMA50', 'RSI', 'BB_upper', 'BB_lower', 'BB_middle',
+                           'MACD', 'MACD_signal', 'MACD_hist', 'volatilita_10', 'zmena_5_svicek']
         for col in indicator_columns:
             df[col] = df[col].ffill().bfill()
         
