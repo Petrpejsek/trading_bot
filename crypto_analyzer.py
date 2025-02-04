@@ -5,6 +5,7 @@ import ta
 import numpy as np
 from datetime import datetime, timezone
 import os
+import time
 
 try:
     import config  # Pro lokální vývoj
@@ -15,11 +16,8 @@ except ImportError:
     config_api_secret = None
 
 # Získáme API klíče z proměnných prostředí nebo z config souboru
-API_KEY = os.environ.get('API_KEY') or config_api_key
-API_SECRET = os.environ.get('API_SECRET') or config_api_secret
-
-if not API_KEY or not API_SECRET:
-    raise ValueError("API klíče nejsou nastaveny ani v proměnných prostředí ani v config.py")
+API_KEY = os.environ.get('BINANCE_API_KEY', 'HXvGQVJ8OJvTZpL3KE6BxUhD8nMXJJTQEVhXnZxoKlGGGK9EOHVjsQyDDVOQVXit')
+API_SECRET = os.environ.get('BINANCE_API_SECRET', 'bkqZtRuynDarwFDNXp9hKgVhkKqjBz5BRqRHhqRLBGEgMSrxVYBrQVCwFxZgGv5n')
 
 # Vytvoříme připojení k Binance
 client = Client(API_KEY, API_SECRET)
