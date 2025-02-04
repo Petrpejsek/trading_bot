@@ -5,6 +5,7 @@ import ta
 import numpy as np
 from datetime import datetime, timezone
 import os
+import requests
 
 try:
     import config  # Pro lokální vývoj
@@ -21,8 +22,21 @@ API_SECRET = os.environ.get('API_SECRET') or config_api_secret
 if not API_KEY or not API_SECRET:
     raise ValueError("API klíče nejsou nastaveny ani v proměnných prostředí ani v config.py")
 
-# Vytvoříme připojení k Binance
-client = Client(API_KEY, API_SECRET)
+# Nastavení proxy pro Binance API
+proxies = None
+if os.environ.get('RENDER'):
+    proxies = {
+        'http': 'http://proxy.packetstream.io:31112',
+        'https': 'http://proxy.packetstream.io:31112'
+    }
+
+# Vytvoříme připojení k Binance s proxy
+if proxies:
+    session = requests.Session()
+    session.proxies.update(proxies)
+    client = Client(API_KEY, API_SECRET, requests_params={'proxies': proxies}, requests_session=session)
+else:
+    client = Client(API_KEY, API_SECRET)
 
 def get_historical_data(symbol, interval, lookback):
     """
