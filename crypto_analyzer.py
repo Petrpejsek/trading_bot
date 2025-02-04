@@ -7,17 +7,9 @@ from datetime import datetime, timezone
 import os
 import time
 
-try:
-    import config  # Pro lokální vývoj
-    config_api_key = config.API_KEY
-    config_api_secret = config.API_SECRET
-except ImportError:
-    config_api_key = None
-    config_api_secret = None
-
-# Získáme API klíče z proměnných prostředí nebo z config souboru
-API_KEY = os.environ.get('BINANCE_API_KEY', 'HXvGQVJ8OJvTZpL3KE6BxUhD8nMXJJTQEVhXnZxoKlGGGK9EOHVjsQyDDVOQVXit')
-API_SECRET = os.environ.get('BINANCE_API_SECRET', 'bkqZtRuynDarwFDNXp9hKgVhkKqjBz5BRqRHhqRLBGEgMSrxVYBrQVCwFxZgGv5n')
+# Nastavení API klíčů přímo v kódu
+API_KEY = 'HXvGQVJ8OJvTZpL3KE6BxUhD8nMXJJTQEVhXnZxoKlGGGK9EOHVjsQyDDVOQVXit'
+API_SECRET = 'bkqZtRuynDarwFDNXp9hKgVhkKqjBz5BRqRHhqRLBGEgMSrxVYBrQVCwFxZgGv5n'
 
 # Vytvoříme připojení k Binance
 client = Client(API_KEY, API_SECRET)
