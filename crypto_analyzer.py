@@ -206,6 +206,62 @@ def get_usdt_pairs():
         print(f"Chyba při získávání seznamu párů: {str(e)}")
         return []
 
+def analyze_data(df, period_name=None):
+    """
+    Analyzuje data a vrátí statistiky.
+    
+    Args:
+        df (pd.DataFrame): DataFrame s historickými daty
+        period_name (str): Název období pro výpis (např. '24 hodin')
+        
+    Returns:
+        dict: Slovník se statistikami
+    """
+    try:
+        if df is None or df.empty:
+            return None
+            
+        # Vypočítáme základní statistiky
+        avg_volume = df['volume'].mean()
+        
+        # Vypočítáme volatilitu (rozdíl mezi high a low)
+        volatility = (df['high'] - df['low']).mean()
+        
+        # Spočítáme počet stagnujících period (kde high-low je menší než 0.1%)
+        stagnant_periods = len(df[((df['high'] - df['low']) / df['low']) < 0.001])
+        
+        # Vypočítáme EMA
+        df['EMA9'] = ta.trend.ema_indicator(df['close'], window=9)
+        df['EMA21'] = ta.trend.ema_indicator(df['close'], window=21)
+        df['EMA50'] = ta.trend.ema_indicator(df['close'], window=50)
+        
+        # Vypočítáme RSI
+        df['RSI'] = ta.momentum.rsi(df['close'], window=14)
+        
+        # Získáme poslední hodnoty
+        last_ema9 = df['EMA9'].iloc[-1]
+        last_ema21 = df['EMA21'].iloc[-1]
+        last_ema50 = df['EMA50'].iloc[-1]
+        last_rsi = df['RSI'].iloc[-1]
+        
+        # Vytvoříme slovník s výsledky
+        results = {
+            'period': period_name,
+            'avg_volume': round(avg_volume, 2),
+            'volatility': round(volatility, 2),
+            'stagnant_periods': stagnant_periods,
+            'ema9': round(last_ema9, 2),
+            'ema21': round(last_ema21, 2),
+            'ema50': round(last_ema50, 2),
+            'rsi': round(last_rsi, 2)
+        }
+        
+        return results
+        
+    except Exception as e:
+        print(f"Chyba při analýze dat: {str(e)}")
+        return None
+
 # Hlavní část programu
 if __name__ == "__main__":
     try:

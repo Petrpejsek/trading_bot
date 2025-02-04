@@ -11,57 +11,43 @@ import crypto_analyzer
 
 app = Flask(__name__)
 
+# Globální proměnné pro ukládání dat
+data = {
+    'hourly': None,
+    'minute15': None,
+    'weekly': None,
+    'last_update': None
+}
+
 def update_data():
-    """Funkce pro pravidelnou aktualizaci dat"""
+    """Funkce pro aktualizaci dat v samostatném vlákně"""
     while True:
         try:
-            # Místo spuštění jako subprocess voláme funkci přímo
-            crypto_analyzer.main()
-            time.sleep(60)  # Aktualizace každou minutu
+            # Získání dat pro různé časové intervaly
+            hourly_data = crypto_analyzer.get_historical_data('BTCUSDT', '1h', 100)
+            minute15_data = crypto_analyzer.get_historical_data('BTCUSDT', '15m', 100)
+            weekly_data = crypto_analyzer.get_historical_data('BTCUSDT', '1w', 100)
+            
+            if hourly_data is not None and minute15_data is not None and weekly_data is not None:
+                # Aktualizace globálních dat
+                data['hourly'] = crypto_analyzer.analyze_data(hourly_data, '24 hodin')
+                data['minute15'] = crypto_analyzer.analyze_data(minute15_data, '24 hodin')
+                data['weekly'] = crypto_analyzer.analyze_data(weekly_data, None)
+                data['last_update'] = time.strftime('%H:%M:%S')
         except Exception as e:
-            print(f"Chyba při aktualizaci dat: {e}")
-
-# Spustíme aktualizační vlákno
-update_thread = threading.Thread(target=update_data, daemon=True)
-update_thread.start()
+            print(f"Chyba při aktualizaci dat: {str(e)}")
+            
+        # Počkáme 60 sekund před další aktualizací
+        time.sleep(60)
 
 @app.route('/')
 def index():
-    # Získáme seznam dostupných párů
-    pairs = crypto_analyzer.get_usdt_pairs()
-    
-    # Získáme aktuálně vybraný symbol
-    selected_symbol = request.args.get('symbol', 'BTCUSDT')
-    
-    # Nastavíme vybraný symbol do prostředí
-    os.environ['SELECTED_SYMBOL'] = selected_symbol
-    
-    try:
-        # Místo spuštění jako subprocess voláme funkci přímo
-        crypto_analyzer.main()
-    except Exception as e:
-        output = f"Chyba při aktualizaci dat: {str(e)}"
-
-    try:
-        # Načteme data ze souborů
-        df = pd.read_csv(f'{selected_symbol}_1h_data.csv')
-        df_15m = pd.read_csv(f'{selected_symbol}_15m_data.csv')
-        df_1w = pd.read_csv(f'{selected_symbol}_1w_data.csv')
-    except Exception as e:
-        # Pokud soubory neexistují, vytvoříme prázdné DataFrames
-        columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume', 
-                  'EMA9', 'EMA21', 'EMA50', 'RSI', 'BB_upper', 'BB_middle', 'BB_lower',
-                  'MACD', 'MACD_signal', 'MACD_hist', 'volatilita_10', 'je_stagnace']
-        df = pd.DataFrame(columns=columns)
-        df_15m = pd.DataFrame(columns=columns)
-        df_1w = pd.DataFrame(columns=columns)
-
-    return render_template('index.html',
-                         pairs=pairs,
-                         selected_symbol=selected_symbol,
-                         df=df.to_dict('records'),
-                         df_15m=df_15m.to_dict('records'),
-                         df_1w=df_1w.to_dict('records'))
+    """Hlavní stránka s daty"""
+    return render_template('index.html', 
+                         hourly_data=data['hourly'],
+                         minute15_data=data['minute15'],
+                         weekly_data=data['weekly'],
+                         last_update=data['last_update'])
 
 @app.route('/download/csv')
 def download_csv():
@@ -150,5 +136,10 @@ def refresh_data():
         return jsonify({'success': False, 'error': str(e)})
 
 if __name__ == '__main__':
+    # Spustíme aktualizační vlákno
+    update_thread = threading.Thread(target=update_data, daemon=True)
+    update_thread.start()
+    
+    # Spustíme Flask aplikaci
     port = int(os.environ.get('PORT', 10000))
-    app.run(host='0.0.0.0', port=port, debug=False) 
+    app.run(host='0.0.0.0', port=port) 
