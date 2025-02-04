@@ -20,9 +20,10 @@ def update_data():
         except Exception as e:
             print(f"Chyba při aktualizaci dat: {e}")
 
-# Spustíme aktualizační vlákno
-update_thread = threading.Thread(target=update_data, daemon=True)
-update_thread.start()
+# Spustíme aktualizační vlákno pouze pokud běžíme jako hlavní proces
+if not os.environ.get('RENDER'):
+    update_thread = threading.Thread(target=update_data, daemon=True)
+    update_thread.start()
 
 @app.route('/')
 def index():
@@ -37,16 +38,26 @@ def index():
     
     try:
         # Spustíme analýzu pro vybraný symbol
-        result = subprocess.run(['python3', 'crypto_analyzer.py'], 
-                              capture_output=True, text=True, check=True)
-        output = result.stdout
-    except subprocess.CalledProcessError as e:
-        output = f"Chyba při aktualizaci dat: {str(e)}\n{e.output}"
+        if not os.environ.get('RENDER'):
+            result = subprocess.run(['python3', 'crypto_analyzer.py'], 
+                                  capture_output=True, text=True, check=True)
+            output = result.stdout
+    except Exception as e:
+        output = f"Chyba při aktualizaci dat: {str(e)}"
 
-    # Načteme data ze souborů
-    df = pd.read_csv(f'{selected_symbol}_1h_data.csv')
-    df_15m = pd.read_csv(f'{selected_symbol}_15m_data.csv')
-    df_1w = pd.read_csv(f'{selected_symbol}_1w_data.csv')
+    try:
+        # Načteme data ze souborů
+        df = pd.read_csv(f'{selected_symbol}_1h_data.csv')
+        df_15m = pd.read_csv(f'{selected_symbol}_15m_data.csv')
+        df_1w = pd.read_csv(f'{selected_symbol}_1w_data.csv')
+    except Exception as e:
+        # Pokud soubory neexistují, vytvoříme prázdné DataFrames
+        columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume', 
+                  'EMA9', 'EMA21', 'EMA50', 'RSI', 'BB_upper', 'BB_middle', 'BB_lower',
+                  'MACD', 'MACD_signal', 'MACD_hist', 'volatilita_10', 'je_stagnace']
+        df = pd.DataFrame(columns=columns)
+        df_15m = pd.DataFrame(columns=columns)
+        df_1w = pd.DataFrame(columns=columns)
 
     return render_template('index.html',
                          pairs=pairs,
@@ -136,10 +147,12 @@ def refresh_data():
         selected_symbol = request.args.get('symbol', 'BTCUSDT')
         os.environ['SELECTED_SYMBOL'] = selected_symbol
         # Spustíme crypto_analyzer.py pro aktualizaci dat
-        subprocess.run(['python3', 'crypto_analyzer.py'], check=True)
+        if not os.environ.get('RENDER'):
+            subprocess.run(['python3', 'crypto_analyzer.py'], check=True)
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8081, debug=True) 
+    port = int(os.environ.get('PORT', 10000))
+    app.run(host='0.0.0.0', port=port, debug=False) 
