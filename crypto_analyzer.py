@@ -25,10 +25,15 @@ if not API_KEY or not API_SECRET:
 # Nastavení proxy pro Binance API
 proxies = None
 if os.environ.get('RENDER'):
-    proxies = {
-        'http': 'http://proxy.packetstream.io:31112',
-        'https': 'http://proxy.packetstream.io:31112'
-    }
+    # Získáme přihlašovací údaje pro proxy z proměnných prostředí
+    proxy_user = os.environ.get('WEBSHARE_USER')
+    proxy_pass = os.environ.get('WEBSHARE_PASS')
+    
+    if proxy_user and proxy_pass:
+        proxies = {
+            'http': f'http://{proxy_user}:{proxy_pass}@proxy.webshare.io:80',
+            'https': f'http://{proxy_user}:{proxy_pass}@proxy.webshare.io:80'
+        }
 
 # Vytvoříme připojení k Binance s proxy
 if proxies:
