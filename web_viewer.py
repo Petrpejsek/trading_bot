@@ -15,15 +15,15 @@ def update_data():
     """Funkce pro pravidelnou aktualizaci dat"""
     while True:
         try:
-            subprocess.run(['python3', 'crypto_analyzer.py'], check=True)
+            # Místo spuštění jako subprocess voláme funkci přímo
+            crypto_analyzer.main()
             time.sleep(60)  # Aktualizace každou minutu
         except Exception as e:
             print(f"Chyba při aktualizaci dat: {e}")
 
-# Spustíme aktualizační vlákno pouze pokud běžíme jako hlavní proces
-if not os.environ.get('RENDER'):
-    update_thread = threading.Thread(target=update_data, daemon=True)
-    update_thread.start()
+# Spustíme aktualizační vlákno
+update_thread = threading.Thread(target=update_data, daemon=True)
+update_thread.start()
 
 @app.route('/')
 def index():
@@ -37,11 +37,8 @@ def index():
     os.environ['SELECTED_SYMBOL'] = selected_symbol
     
     try:
-        # Spustíme analýzu pro vybraný symbol
-        if not os.environ.get('RENDER'):
-            result = subprocess.run(['python3', 'crypto_analyzer.py'], 
-                                  capture_output=True, text=True, check=True)
-            output = result.stdout
+        # Místo spuštění jako subprocess voláme funkci přímo
+        crypto_analyzer.main()
     except Exception as e:
         output = f"Chyba při aktualizaci dat: {str(e)}"
 
@@ -147,8 +144,7 @@ def refresh_data():
         selected_symbol = request.args.get('symbol', 'BTCUSDT')
         os.environ['SELECTED_SYMBOL'] = selected_symbol
         # Spustíme crypto_analyzer.py pro aktualizaci dat
-        if not os.environ.get('RENDER'):
-            subprocess.run(['python3', 'crypto_analyzer.py'], check=True)
+        crypto_analyzer.main()
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})

@@ -4,11 +4,25 @@ import pandas as pd
 import ta
 import numpy as np
 from datetime import datetime, timezone
-import config  # Zde budou API klíče
 import os
 
+try:
+    import config  # Pro lokální vývoj
+    config_api_key = config.API_KEY
+    config_api_secret = config.API_SECRET
+except ImportError:
+    config_api_key = None
+    config_api_secret = None
+
+# Získáme API klíče z proměnných prostředí nebo z config souboru
+API_KEY = os.environ.get('API_KEY') or config_api_key
+API_SECRET = os.environ.get('API_SECRET') or config_api_secret
+
+if not API_KEY or not API_SECRET:
+    raise ValueError("API klíče nejsou nastaveny ani v proměnných prostředí ani v config.py")
+
 # Vytvoříme připojení k Binance
-client = Client(config.API_KEY, config.API_SECRET)
+client = Client(API_KEY, API_SECRET)
 
 def get_historical_data(symbol, interval, lookback):
     """
