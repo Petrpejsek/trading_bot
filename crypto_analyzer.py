@@ -4,15 +4,11 @@ import pandas as pd
 import ta
 import numpy as np
 from datetime import datetime, timezone
+import config  # Zde budou API klíče
 import os
-import time
-
-# Nastavení API klíčů přímo v kódu
-API_KEY = 'HXvGQVJ8OJvTZpL3KE6BxUhD8nMXJJTQEVhXnZxoKlGGGK9EOHVjsQyDDVOQVXit'
-API_SECRET = 'bkqZtRuynDarwFDNXp9hKgVhkKqjBz5BRqRHhqRLBGEgMSrxVYBrQVCwFxZgGv5n'
 
 # Vytvoříme připojení k Binance
-client = Client(API_KEY, API_SECRET)
+client = Client(config.API_KEY, config.API_SECRET)
 
 def get_historical_data(symbol, interval, lookback):
     """
@@ -29,12 +25,33 @@ def get_historical_data(symbol, interval, lookback):
     try:
         print(f"Získávám data pro {symbol} s intervalem {interval}...")
         
-        # Získáme data z Binance
-        klines = client.get_historical_klines(
-            symbol=symbol,
-            interval=interval,
-            limit=lookback
-        )
+        # Pro denní data zkusíme získat více historických dat
+        if interval == '1d':
+            try:
+                # Nejprve zkusíme získat 200 denních svíček
+                klines = client.get_historical_klines(
+                    symbol=symbol,
+                    interval=interval,
+                    limit=200  # Maximálně 200 denních svíček
+                )
+            except:
+                try:
+                    # Pokud se nepodaří 200, zkusíme získat tolik, kolik je dostupných
+                    klines = client.get_historical_klines(
+                        symbol=symbol,
+                        interval=interval,
+                        limit=lookback
+                    )
+                except:
+                    print(f"Nepodařilo se získat denní data pro {symbol}")
+                    return None
+        else:
+            # Pro ostatní časové rámce použijeme standardní počet
+            klines = client.get_historical_klines(
+                symbol=symbol,
+                interval=interval,
+                limit=lookback
+            )
         
         if not klines:
             print(f"Žádná data nebyla nalezena pro {symbol} s intervalem {interval}")
@@ -95,6 +112,15 @@ def add_indicators(df):
         # Vytvoříme kopii DataFrame
         df = df.copy()
         
+        # Kontrola minimálního počtu svíček - snížíme na 20 pro novější páry
+        if len(df) < 20:  # Minimálně 20 svíček pro základní indikátory
+            print(f"Nedostatek dat pro výpočet indikátorů (nalezeno {len(df)} svíček, potřeba alespoň 20)")
+            # Vytvoříme prázdný DataFrame se stejnými sloupci
+            empty_df = pd.DataFrame(columns=['timestamp', 'open', 'high', 'low', 'close', 'volume',
+                                           'EMA9', 'EMA21', 'EMA50', 'RSI', 'BB_upper', 'BB_middle', 'BB_lower',
+                                           'MACD', 'MACD_signal', 'MACD_hist', 'volatilita_10', 'zmena_5_svicek'])
+            return empty_df
+        
         # Převedeme sloupce na float a vyčistíme NaN hodnoty
         numeric_columns = ['open', 'high', 'low', 'close', 'volume']
         for col in numeric_columns:
@@ -108,11 +134,40 @@ def add_indicators(df):
         
         # RSI
         delta = df['close'].diff()
-        gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
-        loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
-        rs = gain / loss
+        gain = delta.where(delta > 0, 0)
+        loss = -delta.where(delta < 0, 0)
+        
+        # První průměr - klasický SMA pro prvních 14 period
+        first_avg_gain = gain.rolling(window=14, min_periods=14).mean()
+        first_avg_loss = loss.rolling(window=14, min_periods=14).mean()
+        
+        # Inicializujeme průměry
+        avg_gain = pd.Series(index=df.index, dtype=float)
+        avg_loss = pd.Series(index=df.index, dtype=float)
+        
+        # Nastavíme první hodnoty
+        avg_gain.iloc[13] = first_avg_gain.iloc[13]  # 14. perioda (index 13)
+        avg_loss.iloc[13] = first_avg_loss.iloc[13]
+        
+        # Wilderův způsob průměrování: ((předchozí avg * 13) + aktuální hodnota) / 14
+        for i in range(14, len(df)):
+            avg_gain.iloc[i] = (avg_gain.iloc[i-1] * 13 + gain.iloc[i]) / 14
+            avg_loss.iloc[i] = (avg_loss.iloc[i-1] * 13 + loss.iloc[i]) / 14
+        
+        # Výpočet RS a RSI
+        rs = avg_gain / avg_loss.where(avg_loss != 0, float('inf'))
         df['RSI'] = 100 - (100 / (1 + rs))
-        df['RSI'] = df['RSI'].clip(0, 100)  # Omezíme hodnoty na 0-100
+        
+        # Speciální případy
+        df.loc[avg_loss == 0, 'RSI'] = 100  # Když není žádná ztráta, RSI = 100
+        df.loc[avg_gain == 0, 'RSI'] = 0    # Když není žádný zisk, RSI = 0
+        
+        # Prvních 14 period nemá platné hodnoty
+        df.loc[:13, 'RSI'] = None
+        
+        # Ošetření NaN hodnot
+        df['RSI'] = df['RSI'].fillna(50)
+        df['RSI'] = df['RSI'].clip(0, 100)
         
         # Bollinger Bands (20 period SMA s 2 směrodatnými odchylkami)
         df['BB_middle'] = df['close'].rolling(window=20).mean()
@@ -155,10 +210,12 @@ def analyze_stagnation(df):
     Returns:
         pd.DataFrame: DataFrame s přidaným sloupcem je_stagnace
     """
-    if df is None or df.empty:
-        return pd.DataFrame(columns=['timestamp', 'open', 'high', 'low', 'close', 'volume', 
-                                   'EMA20', 'EMA50', 'EMA200', 'RSI', 'BB_horni', 'BB_dolni', 'zmena_5_svicek',
-                                   'EMA9', 'EMA21', 'volatilita_10', 'je_stagnace'])
+    if df is None or df.empty or len(df) < 2:  # Kontrola minimálního počtu svíček pro výpočet změny
+        empty_df = pd.DataFrame(columns=['timestamp', 'open', 'high', 'low', 'close', 'volume',
+                                       'EMA9', 'EMA21', 'EMA50', 'RSI', 'BB_upper', 'BB_middle', 'BB_lower',
+                                       'MACD', 'MACD_signal', 'MACD_hist', 'volatilita_10', 'zmena_5_svicek',
+                                       'je_stagnace'])
+        return empty_df
     
     # Vypočítáme procentuální změnu ceny
     df['zmena_ceny'] = df['close'].pct_change()
@@ -195,62 +252,6 @@ def get_usdt_pairs():
     except Exception as e:
         print(f"Chyba při získávání seznamu párů: {str(e)}")
         return []
-
-def analyze_data(df, period_name=None):
-    """
-    Analyzuje data a vrátí statistiky.
-    
-    Args:
-        df (pd.DataFrame): DataFrame s historickými daty
-        period_name (str): Název období pro výpis (např. '24 hodin')
-        
-    Returns:
-        dict: Slovník se statistikami
-    """
-    try:
-        if df is None or df.empty:
-            return None
-            
-        # Vypočítáme základní statistiky
-        avg_volume = df['volume'].mean()
-        
-        # Vypočítáme volatilitu (rozdíl mezi high a low)
-        volatility = (df['high'] - df['low']).mean()
-        
-        # Spočítáme počet stagnujících period (kde high-low je menší než 0.1%)
-        stagnant_periods = len(df[((df['high'] - df['low']) / df['low']) < 0.001])
-        
-        # Vypočítáme EMA
-        df['EMA9'] = ta.trend.ema_indicator(df['close'], window=9)
-        df['EMA21'] = ta.trend.ema_indicator(df['close'], window=21)
-        df['EMA50'] = ta.trend.ema_indicator(df['close'], window=50)
-        
-        # Vypočítáme RSI
-        df['RSI'] = ta.momentum.rsi(df['close'], window=14)
-        
-        # Získáme poslední hodnoty
-        last_ema9 = df['EMA9'].iloc[-1]
-        last_ema21 = df['EMA21'].iloc[-1]
-        last_ema50 = df['EMA50'].iloc[-1]
-        last_rsi = df['RSI'].iloc[-1]
-        
-        # Vytvoříme slovník s výsledky
-        results = {
-            'period': period_name,
-            'avg_volume': round(avg_volume, 2),
-            'volatility': round(volatility, 2),
-            'stagnant_periods': stagnant_periods,
-            'ema9': round(last_ema9, 2),
-            'ema21': round(last_ema21, 2),
-            'ema50': round(last_ema50, 2),
-            'rsi': round(last_rsi, 2)
-        }
-        
-        return results
-        
-    except Exception as e:
-        print(f"Chyba při analýze dat: {str(e)}")
-        return None
 
 # Hlavní část programu
 if __name__ == "__main__":
@@ -304,28 +305,28 @@ if __name__ == "__main__":
             # Uložíme 15minutová data
             df_15m.to_csv(f'{symbol}_{interval_15m}_data.csv', index=False)
 
-        # Nastavení parametrů pro týdenní svíčky
-        interval_1w = '1w'
-        lookback_1w = 100  # Změněno na 100 týdenních svíček
+        # Nastavení parametrů pro denní svíčky
+        interval_1d = '1d'
+        lookback_1d = 100  # Posledních 100 denních svíček
         
-        # Získáme týdenní data
-        df_1w = get_historical_data(symbol, interval_1w, lookback_1w)
-        if df_1w is not None:
-            df_1w = add_indicators(df_1w)
-            df_1w = analyze_stagnation(df_1w)
+        # Získáme denní data
+        df_1d = get_historical_data(symbol, interval_1d, lookback_1d)
+        if df_1d is not None:
+            df_1d = add_indicators(df_1d)
+            df_1d = analyze_stagnation(df_1d)
             
-            # Vypíšeme statistiky pro týdenní data
-            print("\nStatistiky týdenních dat:")
-            print(f"Průměrný objem: {df_1w['volume'].mean():.2f}")
-            print(f"Průměrná volatilita: {df_1w['volatilita_10'].mean():.2f}")
-            print(f"Počet stagnujících period: {df_1w['je_stagnace'].sum()}")
-            print(f"EMA9: {df_1w['EMA9'].iloc[-1]:.2f}")
-            print(f"EMA21: {df_1w['EMA21'].iloc[-1]:.2f}")
-            print(f"EMA50: {df_1w['EMA50'].iloc[-1]:.2f}")
-            print(f"RSI: {df_1w['RSI'].iloc[-1]:.2f}")
+            # Vypíšeme statistiky pro denní data
+            print("\nStatistiky denních dat:")
+            print(f"Průměrný objem: {df_1d['volume'].mean():.2f}")
+            print(f"Průměrná volatilita: {df_1d['volatilita_10'].mean():.2f}")
+            print(f"Počet stagnujících period: {df_1d['je_stagnace'].sum()}")
+            print(f"EMA9: {df_1d['EMA9'].iloc[-1]:.2f}")
+            print(f"EMA21: {df_1d['EMA21'].iloc[-1]:.2f}")
+            print(f"EMA50: {df_1d['EMA50'].iloc[-1]:.2f}")
+            print(f"RSI: {df_1d['RSI'].iloc[-1]:.2f}")
             
-            # Uložíme týdenní data
-            df_1w.to_csv(f'{symbol}_{interval_1w}_data.csv', index=False)
+            # Uložíme denní data
+            df_1d.to_csv(f'{symbol}_{interval_1d}_data.csv', index=False)
             
     except Exception as e:
         print(f"\nChyba při zpracování dat: {str(e)}") 

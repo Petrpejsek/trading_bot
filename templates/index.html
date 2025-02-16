@@ -1,195 +1,526 @@
 <!DOCTYPE html>
-<html lang="cs">
+<html>
 <head>
+    <title>Crypto Data Viewer</title>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crypto Trading Bot</title>
+    <meta http-equiv="refresh" content="60">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: Arial, sans-serif;
+        body { 
+            font-family: 'Roboto', sans-serif; 
             margin: 20px;
             background-color: #f5f5f5;
         }
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 20px;
             background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        h1 {
-            color: #333;
-            text-align: center;
+        .header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
         }
-        .data-section {
+        .symbol-selector {
             margin: 20px 0;
             padding: 20px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
-        .data-section h2 {
-            color: #444;
-            margin-top: 0;
+        .symbol-selector label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 500;
+            color: #333;
         }
-        .stat-row {
-            display: flex;
-            justify-content: space-between;
-            margin: 10px 0;
-            padding: 5px 0;
-            border-bottom: 1px solid #eee;
+        .symbol-selector select {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            background-color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%23333' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+        }
+        .symbol-selector select:hover {
+            border-color: #2196F3;
+        }
+        .symbol-selector select:focus {
+            outline: none;
+            border-color: #2196F3;
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.2);
+        }
+        table { 
+            border-collapse: collapse; 
+            width: 100%;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        th, td { 
+            border: 1px solid #ddd; 
+            padding: 12px 8px;
+            text-align: right;
+        }
+        th { 
+            background-color: #2196F3;
+            color: white;
+            font-weight: 500;
+            position: sticky;
+            top: 0;
+        }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        tr:hover { background-color: #f5f5f5; }
+        .stats { 
+            margin: 20px 0;
+            padding: 20px;
+            background-color: #e3f2fd;
+            border-radius: 8px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: 500;
+            color: #1976D2;
         }
         .stat-label {
-            font-weight: bold;
+            font-size: 14px;
             color: #666;
         }
-        .download-section {
-            margin-top: 20px;
-            text-align: center;
+        .button-container {
+            margin: 20px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
         }
-        .download-btn {
-            display: inline-block;
-            padding: 10px 20px;
-            margin: 5px;
-            background-color: #4CAF50;
+        .button {
+            background-color: #2196F3;
+            border: none;
             color: white;
-            text-decoration: none;
-            border-radius: 5px;
-        }
-        .download-btn:hover {
-            background-color: #45a049;
-        }
-        .last-update {
+            padding: 12px 24px;
             text-align: center;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 120px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .button:hover {
+            background-color: #1976D2;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        .button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .button[disabled] {
+            background-color: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .button-group {
+            margin: 20px 0;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        .button-group button {
+            background-color: #2196F3;
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 120px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .button-group button:hover {
+            background-color: #1976D2;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        .button-group button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .button-group button[disabled] {
+            background-color: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        #copyStatus {
+            display: none;
+            color: #4CAF50;
+            margin-left: 10px;
+            font-weight: 500;
+            padding: 8px 12px;
+            background-color: #E8F5E9;
+            border-radius: 4px;
+        }
+        .timestamp {
+            text-align: left !important;
+        }
+        .update-time {
+            font-size: 12px;
             color: #666;
-            margin-top: 20px;
+            text-align: right;
+            margin-top: 10px;
+        }
+        .refresh-info {
+            font-size: 12px;
+            color: #666;
+            margin-left: auto;
+        }
+        .data-section {
+            margin: 30px 0;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .data-section h2 {
+            margin-top: 0;
+            color: #1976D2;
         }
     </style>
+    <script>
+        function copyData(timeframe) {
+            let data;
+            if (timeframe === '1h') {
+                data = {{ df | tojson | safe }};
+            } else if (timeframe === '15m') {
+                data = {{ df_15m | tojson | safe }};
+            } else if (timeframe === '1d') {
+                data = {{ df_1d | tojson | safe }};
+            }
+            
+            if (!data || data.length === 0) {
+                alert('Žádná data k dispozici pro kopírování');
+                return;
+            }
+
+            // Převedeme data na CSV formát
+            const headers = Object.keys(data[0]).join(',');
+            const rows = data.map(row => Object.values(row).join(','));
+            const csvContent = [headers, ...rows].join('\n');
+            
+            navigator.clipboard.writeText(csvContent)
+                .then(() => {
+                    const status = document.getElementById('copyStatus');
+                    status.style.display = 'inline';
+                    setTimeout(() => {
+                        status.style.display = 'none';
+                    }, 2000);
+                });
+        }
+        
+        function refreshData() {
+            const refreshButton = document.getElementById('refreshButton');
+            refreshButton.disabled = true;
+            refreshButton.textContent = 'Aktualizuji...';
+            
+            const symbol = document.getElementById('symbolSelect').value;
+            fetch('/refresh_data?symbol=' + symbol)
+                .then(response => response.json())
+                .then(data => {
+                    window.location.reload();
+                })
+                .catch(error => {
+                    console.error('Chyba při aktualizaci:', error);
+                    refreshButton.disabled = false;
+                    refreshButton.textContent = 'Obnovit data';
+                });
+        }
+        
+        function changeSymbol() {
+            const symbol = document.getElementById('symbolSelect').value;
+            window.location.href = '/?symbol=' + symbol;
+        }
+        
+        function updateCountdown() {
+            const countdown = document.getElementById('countdown');
+            let seconds = 60;
+            
+            setInterval(() => {
+                seconds -= 1;
+                if (seconds <= 0) {
+                    seconds = 60;
+                }
+                countdown.textContent = seconds;
+            }, 1000);
+        }
+        
+        window.onload = updateCountdown;
+    </script>
 </head>
 <body>
     <div class="container">
-        <h1>Crypto Trading Bot - Statistiky</h1>
+        <h1>Crypto Data Viewer</h1>
         
-        {% if last_update %}
-        <p class="last-update">Poslední aktualizace: {{ last_update }}</p>
-        {% endif %}
-
-        {% if hourly_data %}
-        <div class="data-section">
-            <h2>Hodinová data (24 hodin)</h2>
-            <div class="stat-row">
-                <span class="stat-label">Průměrný objem:</span>
-                <span>{{ hourly_data.avg_volume }}</span>
-            </div>
-            <div class="stat-row">
-                <span class="stat-label">Volatilita:</span>
-                <span>{{ hourly_data.volatility }}</span>
-            </div>
-            <div class="stat-row">
-                <span class="stat-label">Stagnující periody:</span>
-                <span>{{ hourly_data.stagnant_periods }}</span>
-            </div>
-            <div class="stat-row">
-                <span class="stat-label">EMA9:</span>
-                <span>{{ hourly_data.ema9 }}</span>
-            </div>
-            <div class="stat-row">
-                <span class="stat-label">EMA21:</span>
-                <span>{{ hourly_data.ema21 }}</span>
-            </div>
-            <div class="stat-row">
-                <span class="stat-label">EMA50:</span>
-                <span>{{ hourly_data.ema50 }}</span>
-            </div>
-            <div class="stat-row">
-                <span class="stat-label">RSI:</span>
-                <span>{{ hourly_data.rsi }}</span>
-            </div>
-            <div class="download-section">
-                <a href="/download/csv" class="download-btn">Stáhnout CSV</a>
-                <a href="/download/json" class="download-btn">Stáhnout JSON</a>
-            </div>
+        <div class="symbol-selector">
+            <label for="symbolSelect">Vyberte obchodní pár:</label>
+            <select id="symbolSelect" name="symbol" onchange="changeSymbol()">
+                {% for pair in pairs %}
+                <option value="{{ pair }}" {% if pair == selected_symbol %}selected{% endif %}>{{ pair }}</option>
+                {% endfor %}
+            </select>
         </div>
-        {% endif %}
 
-        {% if minute15_data %}
-        <div class="data-section">
-            <h2>15minutová data (24 hodin)</h2>
-            <div class="stat-row">
-                <span class="stat-label">Průměrný objem:</span>
-                <span>{{ minute15_data.avg_volume }}</span>
-            </div>
-            <div class="stat-row">
-                <span class="stat-label">Volatilita:</span>
-                <span>{{ minute15_data.volatility }}</span>
-            </div>
-            <div class="stat-row">
-                <span class="stat-label">Stagnující periody:</span>
-                <span>{{ minute15_data.stagnant_periods }}</span>
-            </div>
-            <div class="stat-row">
-                <span class="stat-label">EMA9:</span>
-                <span>{{ minute15_data.ema9 }}</span>
-            </div>
-            <div class="stat-row">
-                <span class="stat-label">EMA21:</span>
-                <span>{{ minute15_data.ema21 }}</span>
-            </div>
-            <div class="stat-row">
-                <span class="stat-label">EMA50:</span>
-                <span>{{ minute15_data.ema50 }}</span>
-            </div>
-            <div class="stat-row">
-                <span class="stat-label">RSI:</span>
-                <span>{{ minute15_data.rsi }}</span>
-            </div>
-            <div class="download-section">
-                <a href="/download/csv15m" class="download-btn">Stáhnout CSV</a>
-                <a href="/download/json15m" class="download-btn">Stáhnout JSON</a>
-            </div>
+        <div class="button-group">
+            <button onclick="refreshData()" id="refreshButton" class="button">
+                Obnovit data
+            </button>
+            <button onclick="copyData('1h')" class="button">
+                Kopírovat data (1h)
+            </button>
+            <button onclick="copyData('15m')" class="button">
+                Kopírovat data (15m)
+            </button>
+            <button onclick="copyData('1d')" class="button">
+                Kopírovat data (1d)
+            </button>
+            <span id="copyStatus">Data zkopírována!</span>
         </div>
-        {% endif %}
 
-        {% if weekly_data %}
         <div class="data-section">
-            <h2>Týdenní data</h2>
-            <div class="stat-row">
-                <span class="stat-label">Průměrný objem:</span>
-                <span>{{ weekly_data.avg_volume }}</span>
+            <h2>15minutová data</h2>
+            <div class="stats">
+                {% for row in df_15m %}
+                <div class="stat-item">
+                    <div class="stat-value">{{ "%.2f"|format(row.volume) }}</div>
+                    <div class="stat-label">Objem</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">{{ "%.2f"|format(row.volatilita_10) }}</div>
+                    <div class="stat-label">Volatilita</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">{{ row.je_stagnace }}</div>
+                    <div class="stat-label">Stagnace</div>
+                </div>
+                {% endfor %}
             </div>
-            <div class="stat-row">
-                <span class="stat-label">Volatilita:</span>
-                <span>{{ weekly_data.volatility }}</span>
-            </div>
-            <div class="stat-row">
-                <span class="stat-label">Stagnující periody:</span>
-                <span>{{ weekly_data.stagnant_periods }}</span>
-            </div>
-            <div class="stat-row">
-                <span class="stat-label">EMA9:</span>
-                <span>{{ weekly_data.ema9 }}</span>
-            </div>
-            <div class="stat-row">
-                <span class="stat-label">EMA21:</span>
-                <span>{{ weekly_data.ema21 }}</span>
-            </div>
-            <div class="stat-row">
-                <span class="stat-label">EMA50:</span>
-                <span>{{ weekly_data.ema50 }}</span>
-            </div>
-            <div class="stat-row">
-                <span class="stat-label">RSI:</span>
-                <span>{{ weekly_data.rsi }}</span>
-            </div>
-            <div class="download-section">
-                <a href="/download/csv1w" class="download-btn">Stáhnout CSV</a>
-                <a href="/download/json1w" class="download-btn">Stáhnout JSON</a>
-            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Časový rámec</th>
+                        <th>Čas</th>
+                        <th>Otevírací</th>
+                        <th>Nejvyšší</th>
+                        <th>Nejnižší</th>
+                        <th>Zavírací</th>
+                        <th>Objem</th>
+                        <th>EMA9</th>
+                        <th>EMA21</th>
+                        <th>EMA50</th>
+                        <th>RSI</th>
+                        <th>BB Horní</th>
+                        <th>BB Střední</th>
+                        <th>BB Dolní</th>
+                        <th>MACD</th>
+                        <th>MACD Signal</th>
+                        <th>MACD Hist</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in df_15m %}
+                    <tr>
+                        <td>15 minut</td>
+                        <td class="timestamp">{{ row.timestamp }}</td>
+                        <td>{{ "%.2f"|format(row.open) }}</td>
+                        <td>{{ "%.2f"|format(row.high) }}</td>
+                        <td>{{ "%.2f"|format(row.low) }}</td>
+                        <td>{{ "%.2f"|format(row.close) }}</td>
+                        <td>{{ "%.2f"|format(row.volume) }}</td>
+                        <td>{{ "%.2f"|format(row.EMA9) }}</td>
+                        <td>{{ "%.2f"|format(row.EMA21) }}</td>
+                        <td>{{ "%.2f"|format(row.EMA50) }}</td>
+                        <td>{{ "%.2f"|format(row.RSI) }}</td>
+                        <td>{{ "%.2f"|format(row.BB_upper) }}</td>
+                        <td>{{ "%.2f"|format(row.BB_middle) }}</td>
+                        <td>{{ "%.2f"|format(row.BB_lower) }}</td>
+                        <td>{{ "%.2f"|format(row.MACD) }}</td>
+                        <td>{{ "%.2f"|format(row.MACD_signal) }}</td>
+                        <td>{{ "%.2f"|format(row.MACD_hist) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
-        {% endif %}
 
-        <div class="download-section">
-            <a href="/refresh_data" class="download-btn" style="background-color: #2196F3;">Aktualizovat data</a>
+        <div class="table-container">
+            <h2>Hodinové Svíčky</h2>
+            <button onclick="copyData('1h')" class="copy-button">Kopírovat data</button>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Časový rámec</th>
+                        <th>Čas</th>
+                        <th>Open</th>
+                        <th>High</th>
+                        <th>Low</th>
+                        <th>Close</th>
+                        <th>Volume</th>
+                        <th>EMA9</th>
+                        <th>EMA21</th>
+                        <th>EMA50</th>
+                        <th>RSI</th>
+                        <th>BB Horní</th>
+                        <th>BB Střední</th>
+                        <th>BB Spodní</th>
+                        <th>MACD</th>
+                        <th>MACD Signal</th>
+                        <th>MACD Hist</th>
+                        <th>Volatilita (10)</th>
+                        <th>Změna (5)</th>
+                        <th>Stagnace</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in df %}
+                    <tr>
+                        <td>1 hodina</td>
+                        <td>{{ row.timestamp }}</td>
+                        <td>{{ row.open }}</td>
+                        <td>{{ row.high }}</td>
+                        <td>{{ row.low }}</td>
+                        <td>{{ row.close }}</td>
+                        <td>{{ row.volume }}</td>
+                        <td>{{ row.EMA9 }}</td>
+                        <td>{{ row.EMA21 }}</td>
+                        <td>{{ row.EMA50 }}</td>
+                        <td>{{ row.RSI }}</td>
+                        <td>{{ row.BB_upper }}</td>
+                        <td>{{ row.BB_middle }}</td>
+                        <td>{{ row.BB_lower }}</td>
+                        <td>{{ row.MACD }}</td>
+                        <td>{{ row.MACD_signal }}</td>
+                        <td>{{ row.MACD_hist }}</td>
+                        <td>{{ row.volatilita_10 }}</td>
+                        <td>{{ row.zmena_5_svicek }}</td>
+                        <td>{{ row.je_stagnace }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="data-section">
+            <h2>Denní data</h2>
+            <div class="stats">
+                {% for row in df_1d %}
+                <div class="stat-item">
+                    <div class="stat-value">{{ "%.2f"|format(row.volume) }}</div>
+                    <div class="stat-label">Objem</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">{{ "%.2f"|format(row.volatilita_10) }}</div>
+                    <div class="stat-label">Volatilita</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">{{ row.je_stagnace }}</div>
+                    <div class="stat-label">Stagnace</div>
+                </div>
+                {% endfor %}
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Časový rámec</th>
+                        <th>Čas</th>
+                        <th>Otevírací</th>
+                        <th>Nejvyšší</th>
+                        <th>Nejnižší</th>
+                        <th>Zavírací</th>
+                        <th>Objem</th>
+                        <th>EMA9</th>
+                        <th>EMA21</th>
+                        <th>EMA50</th>
+                        <th>RSI</th>
+                        <th>BB Horní</th>
+                        <th>BB Střední</th>
+                        <th>BB Dolní</th>
+                        <th>MACD</th>
+                        <th>MACD Signal</th>
+                        <th>MACD Hist</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in df_1d %}
+                    <tr>
+                        <td>1 den</td>
+                        <td class="timestamp">{{ row.timestamp }}</td>
+                        <td>{{ "%.2f"|format(row.open) }}</td>
+                        <td>{{ "%.2f"|format(row.high) }}</td>
+                        <td>{{ "%.2f"|format(row.low) }}</td>
+                        <td>{{ "%.2f"|format(row.close) }}</td>
+                        <td>{{ "%.2f"|format(row.volume) }}</td>
+                        <td>{{ "%.2f"|format(row.EMA9) }}</td>
+                        <td>{{ "%.2f"|format(row.EMA21) }}</td>
+                        <td>{{ "%.2f"|format(row.EMA50) }}</td>
+                        <td>{{ "%.2f"|format(row.RSI) }}</td>
+                        <td>{{ "%.2f"|format(row.BB_upper) }}</td>
+                        <td>{{ "%.2f"|format(row.BB_middle) }}</td>
+                        <td>{{ "%.2f"|format(row.BB_lower) }}</td>
+                        <td>{{ "%.2f"|format(row.MACD) }}</td>
+                        <td>{{ "%.2f"|format(row.MACD_signal) }}</td>
+                        <td>{{ "%.2f"|format(row.MACD_hist) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="button-container">
+            <a href="/download/csv?symbol={{ selected_symbol }}" class="button" target="_blank">
+                Stáhnout CSV (1h)
+            </a>
+            <a href="/download/csv15m?symbol={{ selected_symbol }}" class="button" target="_blank">
+                Stáhnout CSV (15m)
+            </a>
+            <a href="/download/json?symbol={{ selected_symbol }}" class="button">
+                Stáhnout JSON (1h)
+            </a>
+            <a href="/download/json15m?symbol={{ selected_symbol }}" class="button">
+                Stáhnout JSON (15m)
+            </a>
+            <a href="/download/csv1d?symbol={{ selected_symbol }}" class="button" target="_blank">
+                Stáhnout CSV (1d)
+            </a>
+            <a href="/download/json1d?symbol={{ selected_symbol }}" class="button">
+                Stáhnout JSON (1d)
+            </a>
         </div>
     </div>
 </body>
