@@ -3,7 +3,7 @@ from binance.client import Client
 import pandas as pd
 import ta
 import numpy as np
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import os  # Pro environment variables
 
 # Získáme API klíče z proměnných prostředí
@@ -28,37 +28,33 @@ def get_historical_data(symbol, interval, lookback):
     try:
         print(f"Získávám data pro {symbol} s intervalem {interval}...")
         
-        # Pro denní data zkusíme získat více historických dat
+        # Vypočítáme start_str na základě intervalu a lookback
+        now = datetime.now()
         if interval == '1d':
-            try:
-                # Nejprve zkusíme získat 200 denních svíček
-                klines = client.get_historical_klines(
-                    symbol=symbol,
-                    interval=interval,
-                    limit=200  # Maximálně 200 denních svíček
-                )
-            except:
-                try:
-                    # Pokud se nepodaří 200, zkusíme získat tolik, kolik je dostupných
-                    klines = client.get_historical_klines(
-                        symbol=symbol,
-                        interval=interval,
-                        limit=lookback
-                    )
-                except:
-                    print(f"Nepodařilo se získat denní data pro {symbol}")
-                    return None
+            start_time = now - timedelta(days=lookback)
+        elif interval == '1h':
+            start_time = now - timedelta(hours=lookback)
+        elif interval == '15m':
+            start_time = now - timedelta(minutes=15 * lookback)
         else:
-            # Pro ostatní časové rámce použijeme standardní počet
+            start_time = now - timedelta(hours=lookback)
+            
+        start_str = start_time.strftime('%Y-%m-%d %H:%M:%S')
+        
+        try:
             klines = client.get_historical_klines(
                 symbol=symbol,
                 interval=interval,
+                start_str=start_str,
                 limit=lookback
             )
+        except Exception as e:
+            print(f"Chyba při získávání dat pro {symbol}: {str(e)}")
+            return None
         
         if not klines:
             print(f"Žádná data nebyla nalezena pro {symbol} s intervalem {interval}")
-            return None
+            return pd.DataFrame(columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
             
         # Vytvoříme DataFrame
         df = pd.DataFrame(klines, columns=[
@@ -75,15 +71,6 @@ def get_historical_data(symbol, interval, lookback):
         for col in numeric_columns:
             df[col] = pd.to_numeric(df[col], errors='coerce')
         
-        # Kontrola chybějících hodnot
-        if df[numeric_columns].isnull().any().any():
-            print(f"Varování: Nalezeny chybějící hodnoty v datech pro {symbol}")
-            df = df.dropna(subset=numeric_columns)
-            
-        if df.empty:
-            print(f"Po vyčištění dat nezbyly žádné platné záznamy pro {symbol}")
-            return None
-            
         # Ponecháme jen potřebné sloupce
         df = df[['timestamp', 'open', 'high', 'low', 'close', 'volume']]
         
