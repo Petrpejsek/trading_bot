@@ -4,11 +4,14 @@ import pandas as pd
 import ta
 import numpy as np
 from datetime import datetime, timezone
-import config  # Zde budou API klíče
-import os
+import os  # Pro environment variables
+
+# Získáme API klíče z proměnných prostředí
+API_KEY = os.environ.get('BINANCE_API_KEY', '')
+API_SECRET = os.environ.get('BINANCE_API_SECRET', '')
 
 # Vytvoříme připojení k Binance
-client = Client(config.API_KEY, config.API_SECRET)
+client = Client(API_KEY, API_SECRET)
 
 def get_historical_data(symbol, interval, lookback):
     """
