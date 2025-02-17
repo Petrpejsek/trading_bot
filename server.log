@@ -1,0 +1,38 @@
+2025-02-16 17:35:09,157 - INFO - Spouštím aktualizaci dat...
+ * Serving Flask app 'web_viewer'
+ * Debug mode: on
+Address already in use
+Port 8081 is in use by another program. Either identify and stop that program, or start the server with a different port.
+Získávám data pro BTCUSDT s intervalem 1h...
+Úspěšně získáno 100 záznamů pro BTCUSDT
+
+Statistiky hodinových dat (posledních 24 hodin):
+Průměrný objem: 273.31
+Průměrná volatilita: 119.92
+Počet stagnujících period: 10
+EMA9: 97109.27
+EMA21: 97267.57
+EMA50: 97266.25
+RSI: 43.70
+Získávám data pro BTCUSDT s intervalem 15m...
+Úspěšně získáno 100 záznamů pro BTCUSDT
+
+Statistiky 15minutových dat (posledních 24 hodin):
+Průměrný objem: 69.03
+Průměrná volatilita: 79.64
+Počet stagnujících period: 83
+EMA9: 97018.76
+EMA21: 97056.22
+EMA50: 97193.61
+RSI: 49.16
+Získávám data pro BTCUSDT s intervalem 1d...
+Úspěšně získáno 200 záznamů pro BTCUSDT
+
+Statistiky denních dat:
+Průměrný objem: 30574.21
+Průměrná volatilita: 2432.30
+Počet stagnujících period: 16
+EMA9: 97333.34
+EMA21: 98256.47
+EMA50: 98116.15
+RSI: 45.67

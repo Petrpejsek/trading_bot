@@ -1,0 +1,157 @@
+2025-02-17 13:55:46,765 - INFO - Spouštím aktualizaci dat...
+ * Serving Flask app 'web_viewer'
+ * Debug mode: on
+2025-02-17 13:55:47,040 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8081
+ * Running on http://10.0.0.10:8081
+2025-02-17 13:55:47,040 - INFO - [33mPress CTRL+C to quit[0m
+2025-02-17 13:55:47,042 - INFO -  * Restarting with stat
+2025-02-17 13:55:48,383 - INFO - Spouštím aktualizaci dat...
+2025-02-17 13:55:48,452 - WARNING -  * Debugger is active!
+2025-02-17 13:55:48,470 - INFO -  * Debugger PIN: 267-713-662
+Získávám data pro BTCUSDT s intervalem 1h...
+Úspěšně získáno 100 záznamů pro BTCUSDT
+
+Statistiky hodinových dat (posledních 24 hodin):
+Průměrný objem: 520.99
+Průměrná volatilita: 230.65
+Počet stagnujících period: 7
+EMA9: 96247.15
+EMA21: 96454.92
+EMA50: 96783.11
+RSI: 47.65
+Získávám data pro BTCUSDT s intervalem 15m...
+Úspěšně získáno 100 záznamů pro BTCUSDT
+
+Statistiky 15minutových dat (posledních 24 hodin):
+Průměrný objem: 130.25
+Průměrná volatilita: 131.59
+Počet stagnujících period: 59
+EMA9: 96257.07
+EMA21: 96224.49
+EMA50: 96302.40
+RSI: 58.60
+Získávám data pro BTCUSDT s intervalem 1d...
+Úspěšně získáno 200 záznamů pro BTCUSDT
+
+Statistiky denních dat:
+Průměrný objem: 30450.57
+Průměrná volatilita: 2387.82
+Počet stagnujících period: 16
+EMA9: 97003.61
+EMA21: 98013.20
+EMA50: 98013.48
+RSI: 44.39
+Získávám data pro BTCUSDT s intervalem 1h...
+Úspěšně získáno 100 záznamů pro BTCUSDT
+
+Statistiky hodinových dat (posledních 24 hodin):
+Průměrný objem: 521.00
+Průměrná volatilita: 230.65
+Počet stagnujících period: 7
+EMA9: 96247.15
+EMA21: 96454.92
+EMA50: 96783.11
+RSI: 47.65
+Získávám data pro BTCUSDT s intervalem 15m...
+Úspěšně získáno 100 záznamů pro BTCUSDT
+
+Statistiky 15minutových dat (posledních 24 hodin):
+Průměrný objem: 130.25
+Průměrná volatilita: 131.59
+Počet stagnujících period: 59
+EMA9: 96257.07
+EMA21: 96224.49
+EMA50: 96302.40
+RSI: 58.60
+Získávám data pro BTCUSDT s intervalem 1d...
+Úspěšně získáno 200 záznamů pro BTCUSDT
+
+Statistiky denních dat:
+Průměrný objem: 30450.57
+Průměrná volatilita: 2387.82
+Počet stagnujících period: 16
+EMA9: 97003.61
+EMA21: 98013.20
+EMA50: 98013.48
+RSI: 44.39
+2025-02-17 13:56:49,986 - INFO - Spouštím aktualizaci dat...
+2025-02-17 13:56:51,589 - INFO - Spouštím aktualizaci dat...
+Získávám data pro BTCUSDT s intervalem 1h...
+Úspěšně získáno 100 záznamů pro BTCUSDT
+
+Statistiky hodinových dat (posledních 24 hodin):
+Průměrný objem: 521.06
+Průměrná volatilita: 230.65
+Počet stagnujících period: 7
+EMA9: 96247.15
+EMA21: 96454.92
+EMA50: 96783.11
+RSI: 47.65
+Získávám data pro BTCUSDT s intervalem 15m...
+Úspěšně získáno 100 záznamů pro BTCUSDT
+
+Statistiky 15minutových dat (posledních 24 hodin):
+Průměrný objem: 130.26
+Průměrná volatilita: 131.59
+Počet stagnujících period: 59
+EMA9: 96257.07
+EMA21: 96224.49
+EMA50: 96302.40
+RSI: 58.60
+Získávám data pro BTCUSDT s intervalem 1d...
+Úspěšně získáno 200 záznamů pro BTCUSDT
+
+Statistiky denních dat:
+Průměrný objem: 30450.59
+Průměrná volatilita: 2387.81
+Počet stagnujících period: 16
+EMA9: 97009.79
+EMA21: 98016.01
+EMA50: 98014.70
+RSI: 44.49
+Získávám data pro BTCUSDT s intervalem 1h...
+Úspěšně získáno 100 záznamů pro BTCUSDT
+
+Statistiky hodinových dat (posledních 24 hodin):
+Průměrný objem: 521.16
+Průměrná volatilita: 230.93
+Počet stagnujících period: 7
+EMA9: 96253.34
+EMA21: 96457.73
+EMA50: 96784.32
+RSI: 48.30
+Získávám data pro BTCUSDT s intervalem 15m...
+Úspěšně získáno 100 záznamů pro BTCUSDT
+
+Statistiky 15minutových dat (posledních 24 hodin):
+Průměrný objem: 130.29
+Průměrná volatilita: 131.67
+Počet stagnujících period: 59
+EMA9: 96263.25
+EMA21: 96227.30
+EMA50: 96303.61
+RSI: 59.51
+Získávám data pro BTCUSDT s intervalem 1d...
+Úspěšně získáno 200 záznamů pro BTCUSDT
+
+Statistiky denních dat:
+Průměrný objem: 30450.59
+Průměrná volatilita: 2387.81
+Počet stagnujících period: 16
+EMA9: 97009.79
+EMA21: 98016.01
+EMA50: 98014.70
+RSI: 44.49
+2025-02-17 13:57:12,312 - INFO - Získávám seznam dostupných párů...
+2025-02-17 13:57:12,658 - DEBUG - https://api.binance.com:443 "GET /api/v3/exchangeInfo HTTP/1.1" 200 235887
+2025-02-17 13:57:13,008 - INFO - Vybraný symbol: BTCUSDT
+2025-02-17 13:57:13,008 - INFO - Spouštím analýzu pro BTCUSDT...
+2025-02-17 13:57:16,049 - INFO - Analýza dokončena
+2025-02-17 13:57:16,052 - INFO - Načítám hodinová data...
+2025-02-17 13:57:16,058 - INFO - Načítám 15minutová data...
+2025-02-17 13:57:16,060 - INFO - Načítám denní data...
+2025-02-17 13:57:16,063 - INFO - Renderuji šablonu...
+2025-02-17 13:57:16,115 - INFO - 127.0.0.1 - - [17/Feb/2025 13:57:16] "GET / HTTP/1.1" 200 -
+2025-02-17 13:57:16,765 - INFO - 127.0.0.1 - - [17/Feb/2025 13:57:16] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -

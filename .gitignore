@@ -1,7 +1,9 @@
 # Python
 __pycache__/
-*.py[cod]
-*$py.class
+*.pyc
+*.pyo
+*.pyd
+.Python
 
 # Data soubory
 *.csv
@@ -10,6 +12,7 @@ __pycache__/
 # Virtuální prostředí
 venv/
 env/
+.env
 
 # IDE
 .vscode/
